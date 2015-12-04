@@ -89,6 +89,7 @@ public enum Result<T, Error: ErrorType>: ResultType, CustomStringConvertible, Cu
 	/// The userInfo key for source file line numbers in errors constructed by Result.
 	public static var lineKey: String { return "\(errorDomain).line" }
 
+	#if os(OSX) || os(iOS) || os(tvOS) || os(watchOS)
 	/// Constructs an error.
 	public static func error(message: String? = nil, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) -> NSError {
 		var userInfo: [String: AnyObject] = [
@@ -103,6 +104,7 @@ public enum Result<T, Error: ErrorType>: ResultType, CustomStringConvertible, Cu
 
 		return NSError(domain: errorDomain, code: 0, userInfo: userInfo)
 	}
+	#endif
 
 
 	// MARK: CustomStringConvertible
@@ -148,6 +150,7 @@ public func ?? <T, Error> (left: Result<T, Error>, @autoclosure right: () -> Res
 	return left.recoverWith(right())
 }
 
+#if os(OSX) || os(iOS) || os(tvOS) || os(watchOS)
 // MARK: - Derive result from failable closure
 
 public func materialize<T>(@noescape f: () throws -> T) -> Result<T, NSError> {
@@ -162,6 +165,9 @@ public func materialize<T>(@autoclosure f: () throws -> T) -> Result<T, NSError>
 	}
 }
 
+#endif
+
+#if os(OSX) || os(iOS) || os(tvOS) || os(watchOS)
 // MARK: - Cocoa API conveniences
 
 /// Constructs a Result with the result of calling `try` with an error pointer.
@@ -186,6 +192,8 @@ public func `try`(function: String = __FUNCTION__, file: String = __FILE__, line
 	:	.Failure(error ?? Result<(), NSError>.error(function: function, file: file, line: line))
 }
 
+#endif
+
 
 // MARK: - Operators
 
@@ -203,6 +211,5 @@ infix operator >>- {
 public func >>- <T, U, Error> (result: Result<T, Error>, @noescape transform: T -> Result<U, Error>) -> Result<U, Error> {
 	return result.flatMap(transform)
 }
-
 
 import Foundation
